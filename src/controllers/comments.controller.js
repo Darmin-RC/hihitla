@@ -12,9 +12,15 @@ const commentsControllers = {
     }
 
     const result = await turso.execute({
-      sql: "SELECT * FROM Comments WHERE post_id = ? ORDER BY created_at DESC",
-      args: [post_id],
-    });
+  sql: `
+    SELECT c.*, u.username, u.avatar 
+    FROM Comments c
+    JOIN Users u ON c.author_id = u.id
+    WHERE c.post_id = ?
+    ORDER BY c.created_at DESC
+  `,
+  args: [post_id],
+});
 
     res.json(result.rows);
   } catch (error) {
