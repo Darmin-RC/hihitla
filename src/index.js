@@ -11,10 +11,10 @@ const app = express();
 // middlewares
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:5173",
+  rigin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
-});)
+}));
 
 // rutas de usuarios brow
 app.use(userRoutes);
