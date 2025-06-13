@@ -4,13 +4,25 @@ import { validationResult } from "express-validator";
 
 const commentsControllers = {
   getComments: async (req, res) => {
-    try {
-      const result = await turso.execute("SELECT * FROM Comments");
-      res.json(result.rows);
-    } catch (error) {
-      res.status(500).send("Database error occurred");
+  try {
+    const { post_id } = req.query;
+
+    if (!post_id) {
+      return res.status(400).json({ message: "Missing post_id parameter" });
     }
-  },
+
+    const result = await turso.execute({
+      sql: "SELECT * FROM Comments WHERE post_id = ? ORDER BY created_at DESC",
+      args: [post_id],
+    });
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Database error occurred");
+  }
+},
+
 
   getCommentById: async (req, res) => {
     try {
