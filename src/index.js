@@ -10,12 +10,11 @@ const app = express();
 
 // middlewares
 app.use(express.json());
-cors({
+app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  maxAge: 2592000, // un mes public, luego configuramos para que sea privado
-});
+  allowedHeaders: ["Content-Type", "Authorization"]
+});)
 
 // rutas de usuarios brow
 app.use(userRoutes);
