@@ -1,5 +1,6 @@
 import { turso } from "../config/turso.js";
 import { v4 as uuidv4 } from "uuid";
+import jwt from "jsonwebtoken";
 
 import bcrypt from "bcrypt";
 import { body, validationResult } from "express-validator";
@@ -82,7 +83,7 @@ const userControllers = {
 
       const result = await turso.execute({
         sql: "INSERT INTO Users (id, username, email, avatar, password, gender, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        args: [id, username, email, avatar, password, gender, created_at],
+        args: [id, username, email, avatar, hashedPassword, gender, created_at],
       });
 
       if (result.rowsAffected === 1) {
@@ -217,45 +218,52 @@ const userControllers = {
     }
   },
 
-  // loginUser: async (req, res) => {
-  //   try {
-  //     const { email, password } = req.body;
+  loginUser: async (req, res) => {
+    try {
+      const { email, password } = req.body;
 
-  //     if (!email || !password) {
-  //       return res
-  //         .status(400)
-  //         .json({ message: "Email and password are required" });
-  //     }
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ message: "Email and password are required" });
+      }
 
-  //     const result = await turso.execute({
-  //       sql: "SELECT * FROM Users WHERE email = ?",
-  //       args: [email],
-  //     });
+      const result = await turso.execute({
+        sql: "SELECT * FROM Users WHERE email = ?",
+        args: [email],
+      });
 
-  //     if (result.rows.length === 0) {
-  //       return res.status(401).json({ message: "Invalid credentials" });
-  //     }
+      if (result.rows.length === 0) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
 
-  //     const user = result.rows[0];
-  //     const passwordMatch = await bcrypt.compare(password, user.password);
+      const user = result.rows[0];
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
-  //     if (!passwordMatch) {
-  //       return res.status(401).json({ message: "Invalid credentials" });
-  //     }
+      if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
 
-  //     res.status(200).json({
-  //       message: "Login successful",
-  //       user: {
-  //         id: user.id,
-  //         username: user.username,
-  //         email: user.email,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     res.status(500).json({ message: "Internal server error" });
-  //   }
-  // },
+      const token = jwt.sign(
+        { id: user.id, username: user.username, email: user.email },
+        process.env.JWT_SECRET || "weifhweifwefjweifj239r423j2",
+        { expiresIn: "7d" }
+      );
+
+      res.status(200).json({
+        message: "Login successful",
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
 };
 
 export default userControllers;
