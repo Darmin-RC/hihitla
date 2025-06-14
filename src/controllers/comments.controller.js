@@ -50,33 +50,41 @@ getComments: async (req, res) => {
   },
 
   createComment: async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { post_id, author_id, text } = req.body;
-      const id = uuidv4();
-      const created_at = new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace("T", " ");
-
-      const result = await turso.execute({
-        sql: "INSERT INTO Comments (id, post_id, author_id, text, created_at) VALUES (?, ?, ?, ?, ?)",
-        args: [id, post_id, author_id, text, created_at],
-      });
-
-      if (result.rowsAffected === 1) {
-        res.status(201).json({ message: "Comment created successfully" });
-      } else {
-        res.status(400).json({ message: "Failed to create comment" });
-      }
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+  console.log("Body recibido en createComment:", req.body);
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log("Errores de validación:", errors.array());
+      return res.status(400).json({ errors: errors.array() });
     }
-  },
+
+    const { post_id, author_id, text } = req.body;
+    const id = uuidv4();
+    const created_at = new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+
+    console.log("Intentando insertar comentario:", { id, post_id, author_id, text, created_at });
+
+    const result = await turso.execute({
+      sql: "INSERT INTO Comments (id, post_id, author_id, text, created_at) VALUES (?, ?, ?, ?, ?)",
+      args: [id, post_id, author_id, text, created_at],
+    });
+
+    console.log("Resultado inserción:", result);
+
+    if (result.rowsAffected === 1) {
+      res.status(201).json({ message: "Comment created successfully" });
+    } else {
+      res.status(400).json({ message: "Failed to create comment" });
+    }
+  } catch (error) {
+    console.error("Error en createComment:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+}
+
 
   deleteComment: async (req, res) => {
     try {
