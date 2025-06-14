@@ -23,22 +23,13 @@ getComments: async (req, res) => {
       args: [post_id],
     });
 
-    console.log("Resultado de la DB:", result);
-
-    // Verifica si la estructura realmente tiene .rows
-    if (!result.rows) {
-      return res.status(500).json({
-        message: "Unexpected DB response structure",
-        debug: result,
-      });
-    }
-
-    res.json(result.rows);
+    res.json(result);
   } catch (error) {
-    console.error("🔥 Error en getComments:", error);
+    console.error("Error en getComments:", error);
     res.status(500).send("Database error occurred");
   }
 },
+
 
   getCommentById: async (req, res) => {
     try {
