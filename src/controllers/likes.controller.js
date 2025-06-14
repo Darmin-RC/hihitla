@@ -1,24 +1,35 @@
 import { turso } from "../config/turso.js";
 
 const likesController = {
-  // Obtener likes por post_id
   getLikes: async (req, res) => {
     const postId = req.params.id;
 
     if (!postId) {
-      return res.status(400).json({ message: "Post ID es requerido" });
+      return res.status(400).json({ message: "🔥 El ID del post es requerido" });
     }
 
     try {
+      console.log("📥 Obteniendo likes para el post:", postId);
+
       const result = await turso.execute(
-        "SELECT * FROM Post_likes WHERE post_id = ?",
+        "SELECT user_id, post_id FROM Post_likes WHERE post_id = ?",
         [postId]
       );
 
-      return res.status(200).json(result.rows);
+      if (!result.rows || !Array.isArray(result.rows)) {
+        console.warn("⚠️ El resultado no es un array válido:", result.rows);
+        return res.status(500).json({ message: "⚠️ Error inesperado con los datos" });
+      }
+
+      const likes = result.rows.filter(
+        (row) => row.post_id === postId
+      );
+
+      console.log(`✅ ${likes.length} like(s) encontrados para post ${postId}`);
+      return res.status(200).json(likes);
     } catch (error) {
-      console.error("Error al obtener likes del post:", error);
-      return res.status(500).json({ message: "Error al acceder a la base de datos" });
+      console.error("💥 Error al obtener likes del post:", error);
+      return res.status(500).json({ message: "Error interno al acceder a los likes" });
     }
   },
 
