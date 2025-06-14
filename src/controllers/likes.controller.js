@@ -2,13 +2,20 @@ import { turso } from "../config/turso.js";
 
 const likesController = {
   getLikes: async (req, res) => {
-    try {
-      const result = await turso.execute("SELECT * FROM Post_likes");
-      res.json(result.rows);
-    } catch (error) {
-      res.status(500).send("Database error occurred");
-    }
-  },
+  const postId = req.params.id;
+
+  try {
+    const result = await turso.execute(
+      "SELECT * FROM Post_likes WHERE post_id = ?",
+      [postId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener likes del post:", error);
+    res.status(500).send("Database error occurred");
+  }
+},
+
 
   createLike: async (req, res) => {
     try {
