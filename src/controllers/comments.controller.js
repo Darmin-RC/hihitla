@@ -3,32 +3,32 @@ import { v4 as uuidv4 } from "uuid";
 import { validationResult } from "express-validator";
 
 const commentsControllers = {
-  getComments: async (req, res) => {
-  try {
-    const { post_id } = req.query;
+  
+getComments: async (req, res) => {
+  try {
+    const { id: post_id } = req.params;
 
-    if (!post_id) {
-      return res.status(400).json({ message: "Missing post_id parameter" });
-    }
+    if (!post_id) {
+      return res.status(400).json({ message: "Missing post_id parameter" });
+    }
 
-    const result = await turso.execute({
-  sql: `
-    SELECT c.*, u.username, u.avatar 
-    FROM Comments c
-    JOIN Users u ON c.author_id = u.id
-    WHERE c.post_id = ?
-    ORDER BY c.created_at DESC
-  `,
-  args: [post_id],
-});
+    const result = await turso.execute({
+      sql: `
+        SELECT c.*, u.username, u.avatar 
+        FROM Comments c
+        JOIN Users u ON c.author_id = u.id
+        WHERE c.post_id = ?
+        ORDER BY c.created_at DESC
+      `,
+      args: [post_id],
+    });
 
-    res.json(result.rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Database error occurred");
-  }
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Database error occurred");
+  }
 },
-
 
   getCommentById: async (req, res) => {
     try {
