@@ -1,68 +1,85 @@
 import { turso } from "../config/turso.js";
 
 const likesController = {
+  // Obtener likes por post_id
   getLikes: async (req, res) => {
-  const postId = req.params.id;
+    const postId = req.params.id;
 
-  try {
-    const result = await turso.execute(
-      "SELECT * FROM Post_likes WHERE post_id = ?",
-      [postId]
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Error al obtener likes del post:", error);
-    res.status(500).send("Database error occurred");
-  }
-},
+    if (!postId) {
+      return res.status(400).json({ message: "Post ID es requerido" });
+    }
 
-
-  createLike: async (req, res) => {
     try {
-      const { user_id, post_id } = req.body;
+      const result = await turso.execute(
+        "SELECT * FROM Post_likes WHERE post_id = ?",
+        [postId]
+      );
 
-      const check = await turso.execute({
-        sql: "SELECT * FROM Post_likes WHERE user_id = ? AND post_id = ?",
-        args: [user_id, post_id],
-      });
+      return res.status(200).json(result.rows);
+    } catch (error) {
+      console.error("Error al obtener likes del post:", error);
+      return res.status(500).json({ message: "Error al acceder a la base de datos" });
+    }
+  },
+
+  // Crear like si no existe
+  createLike: async (req, res) => {
+    const { user_id, post_id } = req.body;
+
+    if (!user_id || !post_id) {
+      return res.status(400).json({ message: "user_id y post_id son requeridos" });
+    }
+
+    try {
+      const check = await turso.execute(
+        "SELECT * FROM Post_likes WHERE user_id = ? AND post_id = ?",
+        [user_id, post_id]
+      );
 
       if (check.rows.length > 0) {
-        return res.status(400).json({ message: "Like already exists" });
+        return res.status(409).json({ message: "El like ya existe" });
       }
 
-      const result = await turso.execute({
-        sql: "INSERT INTO Post_likes (user_id, post_id) VALUES (?, ?)",
-        args: [user_id, post_id],
-      });
+      const result = await turso.execute(
+        "INSERT INTO Post_likes (user_id, post_id) VALUES (?, ?)",
+        [user_id, post_id]
+      );
 
       if (result.rowsAffected === 1) {
-        res.status(201).json({ message: "Like created successfully" });
+        return res.status(201).json({ message: "Like creado exitosamente" });
       } else {
-        res.status(400).json({ message: "Failed to create like" });
+        return res.status(500).json({ message: "No se pudo crear el like" });
       }
     } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      console.error("Error al crear like:", error);
+      return res.status(500).json({ message: "Error interno del servidor" });
     }
   },
 
+  // Eliminar like
   deleteLike: async (req, res) => {
-    try {
-      const { user_id, post_id } = req.body;
+    const { user_id, post_id } = req.body;
 
-      const result = await turso.execute({
-        sql: "DELETE FROM Post_likes WHERE user_id = ? AND post_id = ?",
-        args: [user_id, post_id],
-      });
+    if (!user_id || !post_id) {
+      return res.status(400).json({ message: "user_id y post_id son requeridos" });
+    }
+
+    try {
+      const result = await turso.execute(
+        "DELETE FROM Post_likes WHERE user_id = ? AND post_id = ?",
+        [user_id, post_id]
+      );
 
       if (result.rowsAffected === 1) {
-        res.status(200).json({ message: "Like deleted successfully" });
+        return res.status(200).json({ message: "Like eliminado exitosamente" });
       } else {
-        res.status(404).json({ message: "Like not found" });
+        return res.status(404).json({ message: "Like no encontrado" });
       }
     } catch (error) {
-      res.status(500).json({ message: "Database error occurred" });
+      console.error("Error al eliminar like:", error);
+      return res.status(500).json({ message: "Error al eliminar el like" });
     }
-  },
+  }
 };
 
 export default likesController;
